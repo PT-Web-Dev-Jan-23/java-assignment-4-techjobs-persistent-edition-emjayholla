@@ -31,11 +31,15 @@ public class HomeController {
     @Autowired
     private JobRepository jobRepository;
 
+
     @RequestMapping("")
     public String index(Model model) {
 
         model.addAttribute("title", "My Jobs");
-        model.addAttribute("jobs", jobRepository.findAll());
+
+        List jobs = (List<Job>) jobRepository.findAll();
+        model.addAttribute("jobs", jobs );
+
         return "index";
     }
 
@@ -50,43 +54,45 @@ public class HomeController {
 
     @PostMapping("add")
     public String processAddJobForm(@ModelAttribute @Valid Job newJob,
-                                    Errors errors, Model model, @RequestParam int employerId, @RequestParam List<Integer> skills) {
+                                    Errors errors, Model model,
+                                    @RequestParam int employerId,
+                                    @RequestParam List<Integer> skills) {
 
+        model.addAttribute("employers", employerRepository.findAll());
+        model.addAttribute("skills", skillRepository.findAll());
         if (errors.hasErrors()) {
             model.addAttribute("title", "Add Job");
-            List employers = (List<Employer>) employerRepository.findAll();
-            model.addAttribute("employers", employers);
-
-
             return "add";
         }
 
-        Optional<Employer> optEmployer = employerRepository.findById(employerId);
-        if (optEmployer.isPresent()) {
-            Employer employer = optEmployer.get();
+        Optional <Job> result = employerRepository.findById(employerId);
+        if (result.isEmpty()) {
+            model.addAttribute("title", "Invalid ID");
+        } else {
+            Employer employer = result.get();
             newJob.setEmployer(employer);
-
         }
+
 
         List<Skill> skillObjs = (List<Skill>) skillRepository.findAllById(skills);
         newJob.setSkills(skillObjs);
 
         jobRepository.save(newJob);
-
-
         return "redirect:";
     }
 
     @GetMapping("view/{jobId}")
     public String displayViewJob(Model model, @PathVariable int jobId) {
-        Optional<Job> result = jobRepository.findById(jobId);
-        if (result.isEmpty()) {
-            return "redirect:../";
+        Optional<Job> optJob = jobRepository.findById(jobId);
+        if(optJob.isPresent()) {
+            Job job = (Job) optJob.get();
+            model.addAttribute("job", job);
+            return "view";
         }
-        Job job = result.get();
-        model.addAttribute("job", job);
+        else {
+            return "redirect:./";
+        }
 
-        return "view";
     }
 
 
