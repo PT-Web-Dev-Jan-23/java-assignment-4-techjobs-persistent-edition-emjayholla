@@ -65,7 +65,7 @@ public class HomeController {
             return "add";
         }
 
-        Optional <Job> result = employerRepository.findById(employerId);
+        Optional <Employer> result = employerRepository.findById(employerId);
         if (result.isEmpty()) {
             model.addAttribute("title", "Invalid ID");
         } else {
